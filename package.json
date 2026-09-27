@@ -1,0 +1,17 @@
+{
+  "name": "ghar-tak-grocery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ghar Tak Grocery - Fast 15-Minute Grocery Delivery in Rewa, MP",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "build": "vitepress build docs",
+    "dev": "vitepress dev docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.5.0",
+    "vue": "^3.5.0"
+  }
+}
