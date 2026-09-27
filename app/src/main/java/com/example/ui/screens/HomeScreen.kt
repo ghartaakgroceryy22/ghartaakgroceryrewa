@@ -372,7 +372,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
           ) {
-            items(dealsOfTheDay) { product ->
+            items(dealsOfTheDay, key = { it.id }) { product ->
               ProductCard(
                 product = product,
                 quantityInCart = cartMap[product.id] ?: 0,
@@ -435,7 +435,7 @@ fun HomeScreen(
           contentPadding = PaddingValues(horizontal = 16.dp),
           horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-          items(featuredProducts) { product ->
+          items(featuredProducts, key = { it.id }) { product ->
             ProductCard(
               product = product,
               quantityInCart = cartMap[product.id] ?: 0,

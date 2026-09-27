@@ -118,7 +118,7 @@ fun CategoryBrowseScreen(
           )
         }
 
-        items(categories) { cat ->
+        items(categories, key = { it.id }) { cat ->
           val isSelected = selectedCategory?.id == cat.id
           FilterChip(
             selected = isSelected,
@@ -204,7 +204,7 @@ fun CategoryBrowseScreen(
           .fillMaxSize()
           .testTag("category_products_grid")
       ) {
-        items(sortedProducts) { product ->
+        items(sortedProducts, key = { it.id }) { product ->
           ProductCard(
             product = product,
             quantityInCart = cartMap[product.id] ?: 0,

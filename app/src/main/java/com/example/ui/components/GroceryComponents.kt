@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -258,9 +259,27 @@ fun ProductCard(
   val coroutineScope = rememberCoroutineScope()
   val buttonScale = remember { Animatable(1f) }
 
+  // Spring-based entry animation using Compose Animation API
+  val cardEnterAnim = remember { Animatable(0f) }
+  LaunchedEffect(product.id) {
+    cardEnterAnim.animateTo(
+      targetValue = 1f,
+      animationSpec = spring(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+      )
+    )
+  }
+
   Card(
     modifier = modifier
       .width(168.dp)
+      .graphicsLayer {
+        scaleX = 0.88f + (0.12f * cardEnterAnim.value)
+        scaleY = 0.88f + (0.12f * cardEnterAnim.value)
+        alpha = cardEnterAnim.value.coerceIn(0f, 1f)
+        translationY = (1f - cardEnterAnim.value) * 35f
+      }
       .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
       .clickable(onClick = onClick)
       .testTag("product_card_${product.id}"),

@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.data.models.*
+import com.example.ui.components.PaymentConfirmationBottomSheet
 import com.example.ui.theme.*
 import com.example.viewmodel.GroceryViewModel
 import com.example.viewmodel.ScreenDestination
@@ -58,6 +59,7 @@ fun CheckoutScreen(
   val deliveryZones by viewModel.deliveryZones.collectAsState()
 
   var showAddAddressDialog by remember { mutableStateOf(false) }
+  var showPaymentSheet by remember { mutableStateOf(false) }
   var copiedUpiId by remember { mutableStateOf(false) }
   var expandedItemsSummary by remember { mutableStateOf(false) }
 
@@ -200,9 +202,13 @@ fun CheckoutScreen(
 
             Button(
               onClick = {
-                viewModel.updateUpiDetails(utrInput, proofNoteInput)
-                viewModel.placeOrder { orderId ->
-                  viewModel.navigateTo(ScreenDestination.OrderConfirmation(orderId))
+                if (selectedPaymentMethod == PaymentMethod.MANUAL_UPI) {
+                  showPaymentSheet = true
+                } else {
+                  viewModel.updateUpiDetails("", "Cash on Delivery")
+                  viewModel.placeOrder { orderId ->
+                    viewModel.navigateTo(ScreenDestination.OrderConfirmation(orderId))
+                  }
                 }
               },
               shape = RoundedCornerShape(14.dp),
@@ -215,13 +221,13 @@ fun CheckoutScreen(
                 .testTag("place_order_btn")
             ) {
               Icon(
-                imageVector = Icons.Default.Lock,
+                imageVector = if (selectedPaymentMethod == PaymentMethod.MANUAL_UPI) Icons.Default.QrCode2 else Icons.Default.Lock,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp)
               )
               Spacer(modifier = Modifier.width(6.dp))
               Text(
-                text = if (selectedPaymentMethod == PaymentMethod.MANUAL_UPI) "Pay & Place Order" else "Place COD Order",
+                text = if (selectedPaymentMethod == PaymentMethod.MANUAL_UPI) "Proceed to Pay →" else "Place COD Order",
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 14.sp
               )
@@ -532,7 +538,7 @@ fun CheckoutScreen(
                 }
               }
 
-              // Expanded UPI Interactive Card
+              // Sleek UPI Preview & Bottom Sheet Trigger
               AnimatedVisibility(
                 visible = selectedPaymentMethod == PaymentMethod.MANUAL_UPI,
                 enter = expandVertically() + fadeIn(),
@@ -541,177 +547,51 @@ fun CheckoutScreen(
                 Column(
                   modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp)
+                    .padding(top = 10.dp)
                 ) {
-                  // Cashback Reward Banner
                   Surface(
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = GroceryAmberContainer,
                     border = BorderStroke(1.dp, GroceryAmber.copy(alpha = 0.5f)),
                     modifier = Modifier.fillMaxWidth()
                   ) {
                     Row(
-                      modifier = Modifier.padding(10.dp),
+                      modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                       verticalAlignment = Alignment.CenterVertically
                     ) {
-                      Text("💰", fontSize = 18.sp)
+                      Text("💰", fontSize = 16.sp)
                       Spacer(modifier = Modifier.width(8.dp))
                       Text(
                         text = "Earn ₹${cashbackAmount.toInt()} Instant Cashback into your Ghar Tak Wallet!",
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color(0xFF78350F)
                       )
                     }
                   }
 
-                  Spacer(modifier = Modifier.height(12.dp))
+                  Spacer(modifier = Modifier.height(10.dp))
 
-                  // Scannable QR Code & UPI ID Card
-                  Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
-                    border = BorderStroke(1.dp, GroceryCardBorder),
-                    shadowElevation = 2.dp,
-                    modifier = Modifier.fillMaxWidth()
-                  ) {
-                    Column(
-                      modifier = Modifier.padding(14.dp),
-                      horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                      Text(
-                        text = "Scan QR with any UPI App:",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = GroceryTextPrimary
-                      )
-                      Spacer(modifier = Modifier.height(8.dp))
-
-                      // Stylized QR Graphic with scanner frame
-                      Box(
-                        modifier = Modifier
-                          .size(130.dp)
-                          .background(Color(0xFFF8FAFC), RoundedCornerShape(12.dp))
-                          .border(2.dp, GroceryGreenPrimary, RoundedCornerShape(12.dp))
-                          .padding(8.dp),
-                        contentAlignment = Alignment.Center
-                      ) {
-                        Icon(
-                          imageVector = Icons.Default.QrCode2,
-                          contentDescription = "Rewa QR Code",
-                          tint = Color.Black,
-                          modifier = Modifier.fillMaxSize()
-                        )
-                      }
-
-                      Spacer(modifier = Modifier.height(10.dp))
-
-                      // UPI ID Copy Row
-                      Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = GroceryGreenContainer,
-                        modifier = Modifier.fillMaxWidth()
-                      ) {
-                        Row(
-                          modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                          horizontalArrangement = Arrangement.SpaceBetween,
-                          verticalAlignment = Alignment.CenterVertically
-                        ) {
-                          Column {
-                            Text(
-                              text = "UPI ID: ghartakgrocery@icici",
-                              fontWeight = FontWeight.ExtraBold,
-                              fontSize = 13.sp,
-                              color = GroceryGreenDark
-                            )
-                            Text(
-                              text = "Payee: Ghar Tak Grocery Rewa Hub",
-                              fontSize = 10.sp,
-                              color = GroceryTextSecondary
-                            )
-                          }
-
-                          Button(
-                            onClick = {
-                              val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                              clipboard.setPrimaryClip(ClipData.newPlainText("UPI ID", "ghartakgrocery@icici"))
-                              copiedUpiId = true
-                              Toast.makeText(context, "UPI ID Copied to Clipboard!", Toast.LENGTH_SHORT).show()
-                            },
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = GroceryGreenPrimary),
-                            modifier = Modifier.height(30.dp)
-                          ) {
-                            Text(
-                              text = if (copiedUpiId) "Copied! ✓" else "Copy",
-                              fontSize = 11.sp,
-                              fontWeight = FontWeight.Bold
-                            )
-                          }
-                        }
-                      }
-                    }
-                  }
-
-                  Spacer(modifier = Modifier.height(12.dp))
-
-                  // UTR / Reference input field with clear 12-digit helper
-                  OutlinedTextField(
-                    value = utrInput,
-                    onValueChange = { utrInput = it },
-                    label = { Text("12-Digit UPI Reference / UTR Number *") },
-                    placeholder = { Text("e.g. 428190348123") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                      focusedBorderColor = GroceryGreenPrimary,
-                      focusedLabelColor = GroceryGreenPrimary
-                    ),
+                  OutlinedButton(
+                    onClick = { showPaymentSheet = true },
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.5.dp, GroceryGreenPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GroceryGreenPrimary),
                     modifier = Modifier
                       .fillMaxWidth()
-                      .testTag("utr_input_field")
-                  )
-
-                  Spacer(modifier = Modifier.height(8.dp))
-
-                  OutlinedTextField(
-                    value = proofNoteInput,
-                    onValueChange = { proofNoteInput = it },
-                    label = { Text("Payment Note / UPI App Used") },
-                    singleLine = true,
-                    modifier = Modifier
-                      .fillMaxWidth()
-                      .testTag("proof_note_field")
-                  )
-
-                  Spacer(modifier = Modifier.height(8.dp))
-
-                  // Verification badge
-                  Surface(
-                    color = GroceryGreenContainer,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+                      .testTag("open_payment_sheet_btn")
                   ) {
-                    Row(
-                      modifier = Modifier.padding(8.dp),
-                      verticalAlignment = Alignment.CenterVertically
-                    ) {
-                      Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = GroceryGreenDark,
-                        modifier = Modifier.size(16.dp)
-                      )
-                      Spacer(modifier = Modifier.width(6.dp))
-                      Text(
-                        text = "Instant credit: Admin & Rider will verify receipt at delivery.",
-                        fontSize = 11.sp,
-                        color = GroceryGreenDark,
-                        fontWeight = FontWeight.Medium
-                      )
-                    }
+                    Icon(
+                      imageVector = Icons.Default.QrCodeScanner,
+                      contentDescription = null,
+                      modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                      text = "Open Payment Sheet & Upload Screenshot →",
+                      fontWeight = FontWeight.Bold,
+                      fontSize = 12.sp
+                    )
                   }
                 }
               }
@@ -1067,6 +947,22 @@ fun CheckoutScreen(
       dismissButton = {
         TextButton(onClick = { showAddAddressDialog = false }) {
           Text("Cancel")
+        }
+      }
+    )
+  }
+
+  // Modern Payment Confirmation & Screenshot Upload Bottom Sheet
+  if (showPaymentSheet) {
+    PaymentConfirmationBottomSheet(
+      amountPayable = finalPayable,
+      cashbackAmount = cashbackAmount,
+      onDismiss = { showPaymentSheet = false },
+      onConfirmPayment = { utr, proofUri ->
+        showPaymentSheet = false
+        viewModel.updateUpiDetails(utr, proofUri)
+        viewModel.placeOrder { orderId ->
+          viewModel.navigateTo(ScreenDestination.OrderConfirmation(orderId))
         }
       }
     )

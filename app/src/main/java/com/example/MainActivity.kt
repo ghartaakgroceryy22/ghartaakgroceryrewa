@@ -6,7 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -244,9 +244,42 @@ fun GharTakGroceryApp(
       AnimatedContent(
         targetState = currentScreen,
         transitionSpec = {
-          fadeIn(animationSpec = tween(200)) togetherWith fadeOut(animationSpec = tween(200))
+          val isForward = getScreenOrder(targetState) >= getScreenOrder(initialState)
+          val enterAnimation = slideInHorizontally(
+            animationSpec = spring(
+              dampingRatio = Spring.DampingRatioLowBouncy,
+              stiffness = Spring.StiffnessMediumLow
+            ),
+            initialOffsetX = { fullWidth -> if (isForward) (fullWidth * 0.35f).toInt() else (-fullWidth * 0.35f).toInt() }
+          ) + fadeIn(
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+          ) + scaleIn(
+            initialScale = 0.94f,
+            animationSpec = spring(
+              dampingRatio = Spring.DampingRatioMediumBouncy,
+              stiffness = Spring.StiffnessMediumLow
+            )
+          )
+
+          val exitAnimation = slideOutHorizontally(
+            animationSpec = spring(
+              dampingRatio = Spring.DampingRatioNoBouncy,
+              stiffness = Spring.StiffnessMedium
+            ),
+            targetOffsetX = { fullWidth -> if (isForward) (-fullWidth * 0.25f).toInt() else (fullWidth * 0.25f).toInt() }
+          ) + fadeOut(
+            animationSpec = spring(stiffness = Spring.StiffnessMedium)
+          ) + scaleOut(
+            targetScale = 0.96f,
+            animationSpec = spring(
+              dampingRatio = Spring.DampingRatioNoBouncy,
+              stiffness = Spring.StiffnessMedium
+            )
+          )
+
+          enterAnimation togetherWith exitAnimation
         },
-        label = "ScreenTransition"
+        label = "SpringScreenTransition"
       ) { screen ->
         when (screen) {
           is ScreenDestination.Home -> {
@@ -378,3 +411,20 @@ fun GharTakGroceryApp(
     )
   }
 }
+
+private fun getScreenOrder(screen: ScreenDestination): Int {
+  return when (screen) {
+    is ScreenDestination.Home -> 0
+    is ScreenDestination.CategoryBrowse -> 1
+    is ScreenDestination.Search -> 2
+    is ScreenDestination.Cart -> 3
+    is ScreenDestination.Checkout -> 4
+    is ScreenDestination.OrderConfirmation -> 5
+    is ScreenDestination.OrderTracking -> 6
+    is ScreenDestination.OrdersHistory -> 7
+    is ScreenDestination.Wallet -> 8
+    is ScreenDestination.AdminDashboard -> 9
+    is ScreenDestination.DeliveryPartner -> 10
+  }
+}
+
