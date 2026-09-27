@@ -2,5 +2,7 @@
   "name": "Ghar Tak Grocery",
   "description": "Local online grocery delivery platform for Rewa, Madhya Pradesh. Everyday groceries delivered to your doorstep.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
